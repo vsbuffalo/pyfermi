@@ -1,0 +1,3 @@
+[submodule "fermi"]
+	path = fermi
+	url = git://github.com/lh3/fermi.git
