@@ -10,7 +10,10 @@ from array import array
 import pdb
 from ctypes import *
 from Bio import SeqIO
+from collections import namedtuple
+import re
 
+fastq_entry = namedtuple('fastq_entry', ('header', 'seq', 'qual'))
 flib = cdll.LoadLibrary("libfermi.so")
 
 class Fermi(object):
@@ -23,6 +26,29 @@ class Fermi(object):
         self.pqual = c_char_p()
         self._seq = ""
         self._qual = ""
+
+    def fastq_to_list(self, fastq_str, root_name=None):
+        """
+        Convert FASTQ string from Fermi to list of named
+        tuples. Assumes single line FASTQ since this is how Fermi does
+        it.
+        """
+        out = list()
+        chunks = iter(fastq_str.strip().split("\n"))
+        while True:
+            try:
+                chunk = next(chunks)
+            except StopIteration:
+                break
+            assert(chunk.startswith('@'))
+            header = chunk[1:]
+            if root_name is not None:
+                header = root_name + " " + header
+            seq = next(chunks)
+            chunk = next(chunks)
+            qual = next(chunks)
+            out.append(fastq_entry(header, seq, qual))
+        return out        
 
     def readseq(self, file):
         """
@@ -68,7 +94,7 @@ class Fermi(object):
         flib.free_pchar(pseqs)
         return seqs
 
-    def assemble(self, unitig_k=c_int(-1), do_clean=True):
+    def assemble(self, unitig_k=-1, do_clean=True):
         """
         Assembly sequences with call to fm6_api_unitig(). This outputs
         a FASTQ string.
@@ -77,7 +103,7 @@ class Fermi(object):
         do_clean = c_int(int(do_clean))
         tmp = c_void_p()
         punitigs = c_char_p()
-        flib.fm6_ext_unitig(unitig_k, self.len, do_clean, self.pseq, self.pqual, byref(tmp))
+        flib.fm6_ext_unitig(c_int(unitig_k), self.len, do_clean, self.pseq, self.pqual, byref(tmp))
         flib.fm6_ext_unitig_write(byref(tmp), byref(punitigs))
         unitigs = punitigs.value
         flib.free_pchar(punitigs)

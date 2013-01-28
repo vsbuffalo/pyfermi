@@ -23,7 +23,12 @@
 
 ## Notes
 
-`ext.c` contains some extra C functions needed to wrap fermi. These
-are separate from fermi. In some cases, I need klib functions not
-fermi, for example `ksprintf` from `kstring.c`. I try to keep things
-seperate so fermi can be updated without breaking everything.
+`ext.c` contains some extra C functions needed to wrap fermi. In some
+cases, I need klib functions not packaged with fermi, for example
+`ksprintf` from `kstring.c`. I try to keep things separate so fermi
+can be updated without breaking anything.
+
+## Todo
+
+ - Unit tests.
+ - More with error correction.
